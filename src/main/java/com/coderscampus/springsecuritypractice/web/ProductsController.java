@@ -28,3 +28,4 @@ public class ProductsController {
     public ResponseEntity<List<Product>> getAllProducts () {
         return ResponseEntity.ok( allProducts );
     }
+}
