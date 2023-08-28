@@ -7,20 +7,27 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import com.coderscampus.springsecuritypractice.repository.UserRepository;
 import com.coderscampus.springsecuritypractice.service.UserService;
-
-
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
 
 // Example URL -> http://localhost:8080/products
+    private UserRepository userRepository;
     
+    public SecurityConfiguration(UserRepository userRepository) {
+    super();
+    this.userRepository = userRepository;
+}
+
     @Bean
     public PasswordEncoder passwordEncoder () {
         return new BCryptPasswordEncoder();
@@ -28,14 +35,16 @@ public class SecurityConfiguration {
     
     @Bean
     public UserDetailsService userDetailsService () {
-        return new UserService(passwordEncoder());
+        return new UserService(passwordEncoder(), userRepository);
     }
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((request) -> {
-            request.requestMatchers("/products").authenticated()
-                   .anyRequest().permitAll();
+        http.csrf(AbstractHttpConfigurer::disable)
+          .authorizeHttpRequests((request) -> {
+            request
+                   .requestMatchers("/api/v1/users").permitAll()
+                   .requestMatchers("/products").authenticated();
         })
         .authenticationProvider(authenticationProvider())
         .formLogin(Customizer.withDefaults());
@@ -56,4 +65,5 @@ public class SecurityConfiguration {
         daoAuthenticationProvider.setUserDetailsService(userDetailsService());
         return daoAuthenticationProvider;
     }
+
 }
